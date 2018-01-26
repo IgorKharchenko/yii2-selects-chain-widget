@@ -5,7 +5,6 @@
     "keywords": ["yii2", "yii2-widget", "yii2-selects-chain-widget"],
 	"homepage": "https://github.com/IgorKharchenko/yii2-selects-chain-widget",
 	"license": "MIT",
-    "minimum-stability": "stable",
 	"authors": [
 		{
 			"name": "Igor Kharchenko",
@@ -17,7 +16,8 @@
     "require": {
         "php": ">=5.4.0",
         "yiisoft/yii2": ">=2.0.5",
-		"beberlei/assert": ">=2.9.2"
+		"beberlei/assert": ">=2.9.2",
+		"roave/security-advisories:dev-master": "*"
     },
     "config": {
         "process-timeout": 1800
