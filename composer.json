@@ -16,8 +16,7 @@
     "require": {
         "php": ">=5.4.0",
         "yiisoft/yii2": ">=2.0.5",
-		"beberlei/assert": ">=2.9.2",
-		"roave/security-advisories:dev-master": "*"
+		"beberlei/assert": ">=2.9.2"
     },
     "config": {
         "process-timeout": 1800
