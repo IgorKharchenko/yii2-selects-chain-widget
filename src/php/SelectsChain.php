@@ -4,7 +4,7 @@ namespace hatand\widgets\SelectsChainWidget;
 
 use yii\base\Widget;
 use yii\web\View;
-use hatand\SelectsChainWidget\SelectsChainAsset;
+use hatand\widgets\SelectsChainWidget\SelectsChainAsset;
 use yii\web\JsExpression;
 use Assert\Assertion;
 use Assert\AssertionFailedException;
@@ -33,21 +33,55 @@ class SelectsChain extends Widget
     {
         $view = $this->getView();
 
-        foreach ($this->chain as $chainUnit) {
-            if (isset($chainUnit['beforeSend'])) {
-                $chainUnit->beforeSend = new JsExpression($chainUnit->beforeSend);
-            }
-            if (isset($chainUnit['afterSend'])) {
-                $chainUnit->afterSend = new JsExpression($chainUnit->afterSend);
-            }
-        }
-
-        $js = 'new SelectsChain(' . json_encode($this->chain) . ');';
+        $formattedChain = $this->_removeQuotesBetweenFunction([
+            'beforeSend',
+            'afterSend',
+        ]);
+        $js = 'new SelectsChain(' . $formattedChain . ');';
         $view->registerJs($js, View::POS_END);
 
         SelectsChainAsset::register($view);
 
         return '';
+    }
+
+    /**
+     * Делает вот это:
+     * [
+     *     'beforeSend' => 'function() { return 'ahaha' }',
+     *     'afterSend'  => 'function() { return 'ahaha' }',
+     * ]
+     * =>
+     * {
+     *     "beforeSend": function () { return 'ahaha' }
+     *     "afterSend": function () { return 'ahaha' }
+     * }
+     * JsExpression к сожалению здесь бессилен,
+     * пушо колбэки хранятся внутри вложенных массивов,
+     * и после json_encode их оттуда уже просто так не вытащишь.
+     *
+     * @param array $callbackNames массив названий колбэков.
+     *
+     * @return string
+     */
+    private function _removeQuotesBetweenFunction(array $callbackNames): string
+    {
+        $jsonChain = json_encode($this->chain);
+
+        $callbacksRegex = implode('|', $callbackNames);
+
+        $pattern = "/['\"](" . $callbacksRegex . ")['\"][\s\t\r\n]*:[\s\t\r\n]*['\"]([^}]+})[\s\t\r\n]*['\"]/u";
+        $replace = '"$1": $2';
+
+        $replaced = preg_replace($pattern, $replace, $jsonChain);
+        $replaced = str_replace([
+            '\r',
+            '\n',
+            "\r",
+            "\n",
+        ], '', $replaced);
+
+        return $replaced;
     }
 
     /**
@@ -70,7 +104,7 @@ class SelectsChain extends Widget
             Assertion::string($ajax['method']);
 
             if (!empty($ajax['data'])) {
-                Assertion::objectOrClass($ajax['data']);
+                Assertion::isArray($ajax['data']);
             }
             if (isset($ajax['beforeSend'])) {
                 Assertion::string($ajax['beforeSend']);
