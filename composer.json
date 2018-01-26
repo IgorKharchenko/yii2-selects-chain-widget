@@ -1,8 +1,19 @@
 {
     "name": "hatand/yii2-selects-chain-widget",
-    "description": "Chain of HTML select elements.",
+	"type" :"package",
+    "description": "Chain of HTML 'select' elements for Yii2.",
     "keywords": ["yii2", "yii2-widget", "yii2-selects-chain-widget"],
+	"homepage": "https://github.com/IgorKharchenko/yii2-selects-chain-widget",
+	"license": "MIT",
     "minimum-stability": "stable",
+	"authors": [
+		{
+			"name": "Igor Kharchenko",
+			"email": "hatand@bk.ru",
+			"homepage": "https://github.com/IgorKharchenko",
+			"role": "Developer"
+		}
+	],
     "require": {
         "php": ">=5.4.0",
         "yiisoft/yii2": ">=2.0.5"
