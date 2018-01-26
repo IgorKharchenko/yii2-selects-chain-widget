@@ -18,7 +18,9 @@
         "yiisoft/yii2": ">=2.0.5",
 		"beberlei/assert": ">=2.9.2"
     },
-    "config": {
-        "process-timeout": 1800
-    }
+	"autoload": {
+		"psr-4": {
+			"hatand\\widgets\\SelectsChainWidget\\": "src\\php\\"
+		}
+	}
 }
