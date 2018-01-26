@@ -8,10 +8,10 @@ use yii\web\View;
 
 class SelectsChainAsset extends AssetBundle
 {
-    public $sourcePath = __DIR__;
+    public $sourcePath = "@vendor/hatand/yii2-selects-chain-widget";
 
     public $js = [
-        '/src/js/SelectChain.js',
+        'src/js/SelectsChain.js',
     ];
 
     public $jsOptions = [
