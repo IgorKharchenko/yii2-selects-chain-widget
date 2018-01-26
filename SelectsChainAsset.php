@@ -1,6 +1,6 @@
 <?php
 
-namespace frontend\widgets\SelectsChainWidget;
+namespace hatand\widgets\SelectsChainWidget;
 
 use yii\web\AssetBundle;
 use yii\helpers\Url;

@@ -1,11 +1,10 @@
 <?php
 
-namespace frontend\widgets\SelectsChainWidget;
+namespace hatand\widgets\SelectsChainWidget;
 
-use PHPUnit\Framework\AssertionFailedError;
 use yii\base\Widget;
 use yii\web\View;
-use frontend\widgets\SelectsChainWidget\SelectsChainAsset;
+use hatand\SelectsChainWidget\SelectsChainAsset;
 use yii\web\JsExpression;
 use Assert\Assertion;
 use Assert\AssertionFailedException;
