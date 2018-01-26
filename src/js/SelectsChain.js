@@ -196,6 +196,17 @@ function ValidatorException(message) {
     this.name    = 'Исключение валидации';
 }
 
+/**
+ * Это чтобы в аду за такое не было так жарко
+ *       |
+ *      /|\
+ * -------------
+ *       |
+ *       |
+ *       |
+ *       |
+ *       |
+ */
 class Validator {
     validateNestedFields(obj, nestedFields) {
         for (let i = 0; i < nestedFields.length; i++) {
