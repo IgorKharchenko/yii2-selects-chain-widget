@@ -33,11 +33,7 @@ class SelectsChain extends Widget
     {
         $view = $this->getView();
 
-        $formattedChain = $this->_removeQuotesBetweenFunction([
-            'beforeSend',
-            'afterSend',
-        ]);
-        $js = 'new SelectsChain(' . $formattedChain . ');';
+        $js = $this->_getMainJs($this->chain);
         $view->registerJs($js, View::POS_END);
 
         SelectsChainAsset::register($view);
@@ -46,42 +42,103 @@ class SelectsChain extends Widget
     }
 
     /**
-     * Делает вот это:
-     * [
-     *     'beforeSend' => 'function() { return 'ahaha' }',
-     *     'afterSend'  => 'function() { return 'ahaha' }',
-     * ]
-     * =>
-     * {
-     *     "beforeSend": function () { return 'ahaha' }
-     *     "afterSend": function () { return 'ahaha' }
-     * }
-     * JsExpression к сожалению здесь бессилен,
-     * пушо колбэки хранятся внутри вложенных массивов,
-     * и после json_encode их оттуда уже просто так не вытащишь.
+     * Возвращает js, создающий конфигурацию цепочки и
      *
-     * @param array $callbackNames массив названий колбэков.
+     * @param array $chain
      *
      * @return string
      */
-    private function _removeQuotesBetweenFunction(array $callbackNames): string
+    private function _getMainJs(array $chain): string
     {
-        $jsonChain = json_encode($this->chain);
+        $callbacks = $this->_getCallbacksFromChain($chain);
 
-        $callbacksRegex = implode('|', $callbackNames);
+        $mainJs = 'let chainConfiguration = (' . json_encode($chain) . '); ';
+        $mainJs .= $this->_setCallbacksToJs($callbacks);
+        $mainJs .= 'let selectsChain = new SelectsChain(chainConfiguration)';
 
-        $pattern = "/['\"](" . $callbacksRegex . ")['\"][\s\t\r\n]*:[\s\t\r\n]*['\"]([^}]+})[\s\t\r\n]*['\"]/u";
-        $replace = '"$1": $2';
+        return $mainJs;
+    }
 
-        $replaced = preg_replace($pattern, $replace, $jsonChain);
-        $replaced = str_replace([
-            '\r',
-            '\n',
-            "\r",
-            "\n",
-        ], '', $replaced);
+    /**
+     * Возвращает список колбэков из цепочек вот такого вида:
+     * [
+     *     [
+     *         'index' => 'индекс элемента цепочки',
+     *         'callbackName' => 'название колбэка',
+     *         'callbackContent' => new JsExpression('string-овое содержимое колбэка'),
+     *     ],
+     *     ...
+     * ]
+     *
+     * @param array $chain цепочка.
+     *
+     * @return array
+     */
+    private function _getCallbacksFromChain(array $chain): array
+    {
+        $allowedCallbacks = [
+            'beforeSend',
+            'afterSend',
+        ];
 
-        return $replaced;
+        $callbacks = [];
+
+        $chainLength = count($chain);
+        for ($i = 0; $i < $chainLength - 1; $i ++) {
+            $ajax = $chain[$i]['ajax'];
+
+            foreach ($allowedCallbacks as $callbackName) {
+                if (!isset($ajax[$callbackName])) {
+                    continue;
+                }
+
+                if (isset($ajax[$callbackName])) {
+                    $callbacks[] = [
+                        'index'           => $i,
+                        'callbackName'    => $callbackName,
+                        'callbackContent' => new JsExpression($ajax[$callbackName]),
+                    ];
+                }
+            }
+        }
+        $lastChainUnit = $chain[$chainLength - 1];
+        if ($lastChainUnit['change']) {
+            $callbacks[] = [
+                'index'           => $chainLength - 1,
+                'callbackName'    => 'change',
+                'callbackContent' => $lastChainUnit['change'],
+            ];
+        }
+
+        return $callbacks;
+    }
+
+    /**
+     * Переопределяет колбэки в js-объекте chainConfiguration
+     * из string-ов в function-ы.
+     *
+     * @param array $callbacks колбэки (см. _getCallbacksFromChain)
+     *
+     *
+     * @return string
+     *
+     * @see _getCallbacksFromChain();
+     */
+    private function _setCallbacksToJs(array $callbacks): string
+    {
+        $js = '';
+
+        foreach ($callbacks as $arr) {
+
+            $template = 'chainConfiguration[%u].ajax.%s = %s; ';
+            if ('change' === $arr['callbackName']) {
+                $template = str_replace('.ajax', '', $template);
+            }
+
+            $js .= sprintf($template, $arr['index'], $arr['callbackName'], $arr['callbackContent']);
+        }
+
+        return $js;
     }
 
     /**
@@ -95,8 +152,21 @@ class SelectsChain extends Widget
     {
         Assertion::isArray($chain);
 
-        foreach ($chain as $chainUnit) {
+        // последний элемент не содержит колбэков beforeSend и afterSend
+        $chainLength = count($chain);
+        for ($i = 0; $i < $chainLength; $i ++) {
+            $chainUnit = $chain[$i];
+
             Assertion::string($chainUnit['selector']);
+            // последний элемент может содержать колбэк change
+            if ($i === $chainLength - 1) {
+                if (isset($chainUnit['change'])) {
+                    Assertion::string($chainUnit['change']);
+                }
+
+                continue;
+            }
+
             Assertion::isArray($chainUnit['ajax']);
 
             $ajax = $chainUnit['ajax'];

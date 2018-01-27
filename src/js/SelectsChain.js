@@ -11,8 +11,13 @@ class SelectsChain {
 
         this.chain = chain;
 
-        for (let i = 0; i < chain.length; i++) {
+        for (let i = 0; i < chain.length - 1; i++) {
             $(chain[i].selector).on('change', this.mainCallback.bind(this));
+        }
+
+        let lastChainUnit = chain[chain.length - 1];
+        if (lastChainUnit.change) {
+            $(lastChainUnit.selector).on('change', lastChainUnit.change.bind(this));
         }
     }
 
@@ -24,7 +29,7 @@ class SelectsChain {
         }
         let selectorIndex = this.getSelectorIndex(selector);
 
-        this.activeSelector = selector;
+        this.activeSelector   = selector;
         let neighborChainUnit = this.chain[selectorIndex + 1];
         if (neighborChainUnit) {
             this.neighborSelector = neighborChainUnit.selector;
@@ -35,7 +40,7 @@ class SelectsChain {
 
         let callbacks = this.getAjaxCallbacks(chainUnit);
 
-        let selectorText = $(selector + ' :selected').text();
+        let selectorText                = $(selector + ' :selected').text();
         let requestData                 = chainUnit.data || {};
         requestData['' + dataFieldName] = selectorText;
         requestData['_csrf-frontend']   = $('[name=\'_csrf-frontend\']').prop('value');
@@ -50,12 +55,11 @@ class SelectsChain {
             .fail(callbacks.error.bind(this));
     }
 
-    getAjaxCallbacks(chainUnit)
-    {
+    getAjaxCallbacks(chainUnit) {
         return {
             beforeSend: this.getBeforeSendCallback(chainUnit),
-            success: this.successCallback.bind(this),
-            error: this.errorCallback.bind(this)
+            success:    this.successCallback.bind(this),
+            error:      this.errorCallback.bind(this)
         };
     }
 
@@ -76,8 +80,8 @@ class SelectsChain {
         }
 
         let selectorIndex = this.getSelectorIndex(this.activeSelector);
-        let chainUnit = this.chain[selectorIndex];
-        let afterSend = this.getAfterSendCallback(chainUnit);
+        let chainUnit     = this.chain[selectorIndex];
+        let afterSend     = this.getAfterSendCallback(chainUnit);
         afterSend();
     }
 
@@ -171,6 +175,16 @@ class SelectsChain {
 
         for (let i = 0; i < chain.length; i++) {
             validator.isString(chain[i].selector);
+
+            if (i === chain.length - 1) {
+                let lastElement = chain[i];
+
+                if (lastElement.change) {
+                    validator.isFunction(lastElement.change);
+                }
+
+                continue;
+            }
 
             let ajax = chain[i].ajax;
             validator.isObject(ajax);
